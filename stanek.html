@@ -463,8 +463,17 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import firebaseConfig from "./firebase-config.js";
 
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAXXlNF9ssFU72KwgII2_as9Rf29C2vGWY",
+    authDomain: "stanek-8db3c.firebaseapp.com",
+    databaseURL: "https://stanek-8db3c-default-rtdb.firebaseio.com",
+    projectId: "stanek-8db3c",
+    storageBucket: "stanek-8db3c.firebasestorage.app",
+    messagingSenderId: "161617416065",
+    appId: "1:161617416065:web:c0f2855868567774202280"
+  };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
