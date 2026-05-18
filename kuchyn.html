@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kuchyň — Objednávky</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1e1e1e;
+      --border: #282828;
+      --accent: #f5a623;
+      --green: #22c55e;
+      --orange: #f97316;
+      --red: #ef4444;
+      --text: #f0ede8;
+      --muted: #777;
+      --font: 'Barlow', sans-serif;
+      --font-cond: 'Barlow Condensed', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--orange);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--font-cond);
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--orange);
+      letter-spacing: -0.3px;
+    }
+
+    .logo span { color: var(--text); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .live-label {
+      font-size: 13px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .nav-link:hover { color: var(--accent); }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: var(--font-cond);
+      font-size: 36px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .stat-card.ceka .stat-num { color: var(--accent); }
+    .stat-card.pripravuje .stat-num { color: var(--orange); }
+    .stat-card.vydano .stat-num { color: var(--green); }
+
+    .orders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .order-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      animation: slideIn 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
+      transition: border-color 0.2s;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .order-card.stav-ceka { border-color: var(--accent); }
+    .order-card.stav-pripravuje { border-color: var(--orange); }
+
+    .order-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+    }
+
+    .order-num {
+      font-family: var(--font-cond);
+      font-size: 40px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--accent);
+    }
+
+    .order-meta {
+      text-align: right;
+    }
+
+    .order-time {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .stav-badge {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .badge-ceka { background: rgba(245,166,35,0.15); color: var(--accent); }
+    .badge-pripravuje { background: rgba(249,115,22,0.15); color: var(--orange); }
+
+    .order-items {
+      padding: 0 16px 10px;
+      font-size: 15px;
+      line-height: 1.9;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .order-pozn {
+      margin: 8px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border-radius: 8px;
+    }
+
+    .order-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .action-btn {
+      padding: 14px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-cond);
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .action-btn:first-child { border-right: 1px solid var(--border); }
+
+    .action-btn.pripravuje {
+      color: var(--orange);
+    }
+    .action-btn.pripravuje:hover, .action-btn.pripravuje.active {
+      background: rgba(249,115,22,0.15);
+    }
+
+    .action-btn.vydano {
+      color: var(--green);
+    }
+    .action-btn.vydano:hover, .action-btn.vydano.active {
+      background: rgba(34,197,94,0.15);
+    }
+
+    .action-btn.active {
+      font-weight: 900;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: 17px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔥 Kuchy<span>ň</span></div>
+  <div class="header-right">
+    <div class="live-dot"></div>
+    <span class="live-label">LIVE</span>
+    <a href="stanek.html" class="nav-link">← Stánek</a>
+    <a href="zakaznik.html" class="nav-link">→ Zákazník</a>
+  </div>
+</header>
+
+<div class="container">
+  <div class="stats-row">
+    <div class="stat-card ceka">
+      <div class="stat-num" id="count-ceka">0</div>
+      <div class="stat-label">Čekají</div>
+    </div>
+    <div class="stat-card pripravuje">
+      <div class="stat-num" id="count-pripravuje">0</div>
+      <div class="stat-label">Připravují se</div>
+    </div>
+    <div class="stat-card vydano">
+      <div class="stat-num" id="count-vydano">0</div>
+      <div class="stat-label">Vydáno dnes</div>
+    </div>
+  </div>
+
+  <div class="orders-grid" id="orders-grid">
+    <div class="empty-state">
+      <div class="icon">🍽️</div>
+      <p>Čekám na objednávky...</p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import firebaseConfig from "./firebase-config.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let allOrders = {};
+
+  onValue(ref(db, 'objednavky'), (snap) => {
+    allOrders = snap.exists() ? snap.val() : {};
+    render();
+  });
+
+  function render() {
+    const grid = document.getElementById('orders-grid');
+    const active = Object.entries(allOrders)
+      .filter(([, o]) => o.stav !== 'vydano')
+      .sort(([, a], [, b]) => (a.timestamp || 0) - (b.timestamp || 0));
+
+    const vydano = Object.values(allOrders).filter(o => o.stav === 'vydano');
+    const pripravuje = Object.values(allOrders).filter(o => o.stav === 'pripravuje');
+    const ceka = Object.values(allOrders).filter(o => o.stav === 'ceka');
+
+    document.getElementById('count-ceka').textContent = ceka.length;
+    document.getElementById('count-pripravuje').textContent = pripravuje.length;
+    document.getElementById('count-vydano').textContent = vydano.length;
+
+    if (active.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><div class="icon">🍽️</div><p>Žádné čekající objednávky</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = active.map(([key, o]) => `
+      <div class="order-card stav-${o.stav}" id="card-${key}">
+        <div class="order-header">
+          <div class="order-num">#${o.cislo}</div>
+          <div class="order-meta">
+            <div class="order-time">${o.cas || ''}</div>
+            <div class="stav-badge badge-${o.stav}">
+              ${o.stav === 'ceka' ? 'Čeká' : 'Připravuje se'}
+            </div>
+          </div>
+        </div>
+        <div class="order-items">${(o.items || []).join('<br>')}</div>
+        ${o.poznamka ? `<div class="order-pozn">📝 ${o.poznamka}</div>` : ''}
+        <div class="order-actions">
+          <button class="action-btn pripravuje ${o.stav === 'pripravuje' ? 'active' : ''}"
+            onclick="setStav('${key}', 'pripravuje')">
+            🔥 Připravuji
+          </button>
+          <button class="action-btn vydano"
+            onclick="setStav('${key}', 'vydano')">
+            ✅ Vydat
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.setStav = function(key, stav) {
+    update(ref(db, 'objednavky/' + key), { stav });
+  };
+</script>
+</body>
+</html>

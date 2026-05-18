@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stánek — Objednávky</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #242424;
+      --border: #2e2e2e;
+      --accent: #f5a623;
+      --accent2: #e8430a;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #f0ede8;
+      --muted: #888;
+      --font: 'Barlow', sans-serif;
+      --font-cond: 'Barlow Condensed', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      padding-bottom: 120px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header .logo {
+      font-family: var(--font-cond);
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    header .logo span { color: var(--text); }
+
+    header .badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+
+    .container { max-width: 560px; margin: 0 auto; padding: 20px 16px; }
+
+    .section-label {
+      font-family: var(--font-cond);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin: 24px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label:first-child { margin-top: 0; }
+
+    .item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .item-card.selected {
+      border-color: var(--accent);
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .item-name {
+      flex: 1;
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qty-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.1s, border-color 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .qty-btn:active { background: var(--border); }
+    .qty-btn.plus { border-color: var(--accent); color: var(--accent); }
+    .qty-btn.plus:active { background: var(--accent); color: #000; }
+
+    .qty-num {
+      font-family: var(--font-cond);
+      font-size: 22px;
+      font-weight: 700;
+      min-width: 24px;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .qty-num.zero { color: var(--muted); }
+
+    .opts-row {
+      display: none;
+      padding: 0 16px 14px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .opts-row.visible { display: flex; }
+
+    .opt-chip {
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .opt-chip.sel {
+      border-color: var(--accent);
+      background: rgba(245, 166, 35, 0.15);
+      color: var(--accent);
+    }
+
+    .note-wrap { margin-top: 20px; }
+
+    .note-wrap label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 16px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus { border-color: var(--accent); }
+
+    .submit-wrap {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      background: linear-gradient(to top, #0f0f0f 70%, transparent);
+      z-index: 99;
+    }
+
+    .submit-btn {
+      width: 100%;
+      max-width: 560px;
+      display: block;
+      margin: 0 auto;
+      padding: 18px;
+      background: var(--accent);
+      color: #000;
+      font-family: var(--font-cond);
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: opacity 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    /* Confirm overlay */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .confirm-overlay.show { display: flex; }
+
+    .confirm-box {
+      background: var(--surface);
+      border: 2px solid var(--green);
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      max-width: 340px;
+      width: 100%;
+      animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .confirm-box .big-num {
+      font-family: var(--font-cond);
+      font-size: 96px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .confirm-box .label {
+      font-size: 15px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .confirm-box .items-list {
+      margin-top: 16px;
+      text-align: left;
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .confirm-box .pozn {
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 8px;
+    }
+
+    .confirm-close {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      background: var(--green);
+      color: #000;
+      font-family: var(--font-cond);
+      font-size: 18px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 0;
+      margin-top: 4px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 4px 0;
+    }
+
+    .nav-link:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">⚽ Fotbal<span>Stánek</span></div>
+    <div class="nav-links">
+      <a href="kuchyn.html" class="nav-link">→ Kuchyň</a>
+      <a href="zakaznik.html" class="nav-link">→ Zákazník</a>
+    </div>
+  </div>
+  <div class="badge" id="cart-count">0 položek</div>
+</header>
+
+<div class="container">
+
+  <div class="section-label">Langoš</div>
+
+  <div class="item-card" id="card-langos">
+    <div class="item-row" onclick="toggleItem('langos')">
+      <span class="item-name">Langoš</span>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="event.stopPropagation(); changeQty('langos',-1)">−</button>
+        <span class="qty-num zero" id="qty-langos">0</span>
+        <button class="qty-btn plus" onclick="event.stopPropagation(); changeQty('langos',1)">+</button>
+      </div>
+    </div>
+    <div class="opts-row" id="opts-langos">
+      <button class="opt-chip" onclick="toggleOpt('langos','kecup')">Kečup</button>
+      <button class="opt-chip" onclick="toggleOpt('langos','cesnek')">Česnek</button>
+      <button class="opt-chip" onclick="toggleOpt('langos','syr')">Sýr</button>
+    </div>
+  </div>
+
+  <div class="section-label">Z grilu</div>
+
+  <div class="item-card" id="card-klobasa-pal">
+    <div class="item-row" onclick="toggleItem('klobasa-pal')">
+      <span class="item-name">Klobása pálivá</span>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="event.stopPropagation(); changeQty('klobasa-pal',-1)">−</button>
+        <span class="qty-num zero" id="qty-klobasa-pal">0</span>
+        <button class="qty-btn plus" onclick="event.stopPropagation(); changeQty('klobasa-pal',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="item-card" id="card-klobasa-oby">
+    <div class="item-row" onclick="toggleItem('klobasa-oby')">
+      <span class="item-name">Klobása obyčejná</span>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="event.stopPropagation(); changeQty('klobasa-oby',-1)">−</button>
+        <span class="qty-num zero" id="qty-klobasa-oby">0</span>
+        <button class="qty-btn plus" onclick="event.stopPropagation(); changeQty('klobasa-oby',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="item-card" id="card-krkovice">
+    <div class="item-row" onclick="toggleItem('krkovice')">
+      <span class="item-name">Uzená krkovice</span>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="event.stopPropagation(); changeQty('krkovice',-1)">−</button>
+        <span class="qty-num zero" id="qty-krkovice">0</span>
+        <button class="qty-btn plus" onclick="event.stopPropagation(); changeQty('krkovice',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="item-card" id="card-bok">
+    <div class="item-row" onclick="toggleItem('bok')">
+      <span class="item-name">Uzený bok</span>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="event.stopPropagation(); changeQty('bok',-1)">−</button>
+        <span class="qty-num zero" id="qty-bok">0</span>
+        <button class="qty-btn plus" onclick="event.stopPropagation(); changeQty('bok',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="item-card" id="card-kure">
+    <div class="item-row" onclick="toggleItem('kure')">
+      <span class="item-name">Kuřecí čtvrtka</span>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="event.stopPropagation(); changeQty('kure',-1)">−</button>
+        <span class="qty-num zero" id="qty-kure">0</span>
+        <button class="qty-btn plus" onclick="event.stopPropagation(); changeQty('kure',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Párek v rohlíku</div>
+
+  <div class="item-card" id="card-parek">
+    <div class="item-row" onclick="toggleItem('parek')">
+      <span class="item-name">Párek v rohlíku</span>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="event.stopPropagation(); changeQty('parek',-1)">−</button>
+        <span class="qty-num zero" id="qty-parek">0</span>
+        <button class="qty-btn plus" onclick="event.stopPropagation(); changeQty('parek',1)">+</button>
+      </div>
+    </div>
+    <div class="opts-row" id="opts-parek">
+      <button class="opt-chip" onclick="toggleOpt('parek','kecup')">Kečup</button>
+      <button class="opt-chip" onclick="toggleOpt('parek','horcice')">Hořčice</button>
+      <button class="opt-chip" onclick="toggleOpt('parek','oboji')">Obojí</button>
+      <button class="opt-chip" onclick="toggleOpt('parek','nic')">Nic</button>
+    </div>
+  </div>
+
+  <div class="note-wrap">
+    <label for="poznamka">Poznámka ke objednávce</label>
+    <textarea id="poznamka" rows="2" placeholder="Alergie, přání..."></textarea>
+  </div>
+
+</div>
+
+<div class="submit-wrap">
+  <button class="submit-btn" id="submit-btn" onclick="submitOrder()" disabled>
+    Odeslat objednávku
+  </button>
+</div>
+
+<!-- Confirm overlay -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="big-num" id="confirm-num">—</div>
+    <div class="label">číslo objednávky</div>
+    <div class="items-list" id="confirm-items"></div>
+    <div class="pozn" id="confirm-pozn"></div>
+    <button class="confirm-close" onclick="closeConfirm()">Nová objednávka</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import firebaseConfig from "./firebase-config.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const ITEM_NAMES = {
+    'langos': 'Langoš',
+    'klobasa-pal': 'Klobása pálivá',
+    'klobasa-oby': 'Klobása obyčejná',
+    'krkovice': 'Uzená krkovice',
+    'bok': 'Uzený bok',
+    'kure': 'Kuřecí čtvrtka',
+    'parek': 'Párek v rohlíku'
+  };
+
+  const OPT_LABELS = {
+    kecup: 'kečup', cesnek: 'česnek', syr: 'sýr',
+    horcice: 'hořčice', oboji: 'obojí', nic: 'nic'
+  };
+
+  let itemQty = {};
+  let itemOpts = {};
+
+  window.toggleItem = function(id) {
+    if (!itemQty[id] || itemQty[id] === 0) {
+      itemQty[id] = 1;
+    }
+    updateCard(id);
+  };
+
+  window.changeQty = function(id, delta) {
+    itemQty[id] = Math.max(0, (itemQty[id] || 0) + delta);
+    updateCard(id);
+  };
+
+  window.toggleOpt = function(item, opt) {
+    if (!itemOpts[item]) itemOpts[item] = new Set();
+    if (itemOpts[item].has(opt)) itemOpts[item].delete(opt);
+    else itemOpts[item].add(opt);
+    refreshOpts(item);
+  };
+
+  function updateCard(id) {
+    const qty = itemQty[id] || 0;
+    const qtyEl = document.getElementById('qty-' + id);
+    const cardEl = document.getElementById('card-' + id);
+    const optsEl = document.getElementById('opts-' + id);
+    qtyEl.textContent = qty;
+    qtyEl.classList.toggle('zero', qty === 0);
+    cardEl.classList.toggle('selected', qty > 0);
+    if (optsEl) optsEl.classList.toggle('visible', qty > 0);
+    updateSubmitBtn();
+    updateCartCount();
+  }
+
+  function refreshOpts(item) {
+    const optsEl = document.getElementById('opts-' + item);
+    if (!optsEl) return;
+    optsEl.querySelectorAll('.opt-chip').forEach(chip => {
+      const onclick = chip.getAttribute('onclick');
+      const match = onclick.match(/'([^']+)'\)$/);
+      if (match) {
+        chip.classList.toggle('sel', itemOpts[item]?.has(match[1]) || false);
+      }
+    });
+  }
+
+  function getTotal() {
+    return Object.values(itemQty).reduce((s, v) => s + v, 0);
+  }
+
+  function updateSubmitBtn() {
+    document.getElementById('submit-btn').disabled = getTotal() === 0;
+  }
+
+  function updateCartCount() {
+    const t = getTotal();
+    document.getElementById('cart-count').textContent = t + (t === 1 ? ' položka' : t < 5 ? ' položky' : ' položek');
+  }
+
+  async function getNextCislo() {
+    const snap = await get(ref(db, 'objednavky'));
+    if (!snap.exists()) return 1;
+    const data = snap.val();
+    const nums = Object.values(data).map(o => o.cislo || 0);
+    return Math.max(...nums) + 1;
+  }
+
+  window.submitOrder = async function() {
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Odesílám...';
+
+    const items = Object.entries(itemQty)
+      .filter(([k, v]) => v > 0)
+      .map(([k, v]) => {
+        let name = ITEM_NAMES[k] + (v > 1 ? ' ×' + v : '');
+        if (itemOpts[k]?.size > 0) {
+          name += ' (' + [...itemOpts[k]].map(o => OPT_LABELS[o] || o).join(', ') + ')';
+        }
+        return name;
+      });
+
+    const cislo = await getNextCislo();
+    const poznamka = document.getElementById('poznamka').value.trim();
+
+    await push(ref(db, 'objednavky'), {
+      cislo,
+      items,
+      poznamka,
+      stav: 'ceka',
+      cas: new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now()
+    });
+
+    showConfirm(cislo, items, poznamka);
+  };
+
+  function showConfirm(cislo, items, poznamka) {
+    document.getElementById('confirm-num').textContent = '#' + cislo;
+    document.getElementById('confirm-items').innerHTML = items.join('<br>');
+    document.getElementById('confirm-pozn').textContent = poznamka ? '📝 ' + poznamka : '';
+    document.getElementById('confirm-overlay').classList.add('show');
+  }
+
+  window.closeConfirm = function() {
+    document.getElementById('confirm-overlay').classList.remove('show');
+    resetForm();
+  };
+
+  function resetForm() {
+    itemQty = {}; itemOpts = {};
+    Object.keys(ITEM_NAMES).forEach(id => {
+      const qtyEl = document.getElementById('qty-' + id);
+      const cardEl = document.getElementById('card-' + id);
+      const optsEl = document.getElementById('opts-' + id);
+      if (qtyEl) { qtyEl.textContent = '0'; qtyEl.classList.add('zero'); }
+      if (cardEl) cardEl.classList.remove('selected');
+      if (optsEl) {
+        optsEl.classList.remove('visible');
+        optsEl.querySelectorAll('.opt-chip').forEach(c => c.classList.remove('sel'));
+      }
+    });
+    document.getElementById('poznamka').value = '';
+    document.getElementById('submit-btn').textContent = 'Odeslat objednávku';
+    updateSubmitBtn();
+    updateCartCount();
+  }
+</script>
+</body>
+</html>

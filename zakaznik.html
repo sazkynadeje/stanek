@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stav objednávky</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #222;
+      --border: #2a2a2a;
+      --accent: #f5a623;
+      --green: #22c55e;
+      --orange: #f97316;
+      --text: #f0ede8;
+      --muted: #777;
+      --font: 'Barlow', sans-serif;
+      --font-cond: 'Barlow Condensed', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: var(--font-cond);
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--accent);
+    }
+
+    .logo span { color: var(--text); }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .nav-link:hover { color: var(--accent); }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 32px 16px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    input[type="number"] {
+      flex: 1;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      color: var(--text);
+      font-family: var(--font-cond);
+      font-size: 28px;
+      font-weight: 700;
+      outline: none;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus { border-color: var(--accent); }
+    input[type="number"]::placeholder { color: var(--muted); font-weight: 400; font-size: 18px; }
+
+    .search-btn {
+      padding: 16px 22px;
+      background: var(--accent);
+      color: #000;
+      font-family: var(--font-cond);
+      font-size: 18px;
+      font-weight: 900;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .search-btn:active { opacity: 0.85; }
+
+    /* Status display */
+    .status-display {
+      display: none;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .status-display.show { display: block; }
+
+    @keyframes fadeUp {
+      from { transform: translateY(8px); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+
+    .big-order-num {
+      font-family: var(--font-cond);
+      font-size: 100px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--accent);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    /* Status indicator */
+    .status-indicator {
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .status-indicator.ceka {
+      background: rgba(245,166,35,0.08);
+      border: 1.5px solid rgba(245,166,35,0.3);
+    }
+
+    .status-indicator.pripravuje {
+      background: rgba(249,115,22,0.08);
+      border: 1.5px solid rgba(249,115,22,0.4);
+    }
+
+    .status-indicator.vydano {
+      background: rgba(34,197,94,0.08);
+      border: 1.5px solid rgba(34,197,94,0.4);
+    }
+
+    .status-icon { font-size: 48px; margin-bottom: 10px; }
+
+    .status-text {
+      font-family: var(--font-cond);
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+    }
+
+    .status-indicator.ceka .status-text { color: var(--accent); }
+    .status-indicator.pripravuje .status-text { color: var(--orange); }
+    .status-indicator.vydano .status-text { color: var(--green); }
+
+    .status-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      margin-bottom: 20px;
+    }
+
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .step {
+      flex: 1;
+      text-align: center;
+      padding: 10px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      border-bottom: 3px solid var(--border);
+      transition: color 0.3s, border-color 0.3s;
+    }
+
+    .step.done { color: var(--green); border-color: var(--green); }
+    .step.active-step { color: var(--orange); border-color: var(--orange); }
+
+    /* Items */
+    .items-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .items-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .items-body {
+      padding: 14px 16px;
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .pozn-row {
+      padding: 10px 16px 14px;
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+    }
+
+    /* All orders board (big screen) */
+    .board-section {
+      margin-top: 40px;
+    }
+
+    .board-label {
+      font-family: var(--font-cond);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .board-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .board-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+
+    .board-num {
+      font-family: var(--font-cond);
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--accent);
+      min-width: 48px;
+    }
+
+    .board-stav {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .board-stav.ceka { color: var(--accent); }
+    .board-stav.pripravuje { color: var(--orange); }
+    .board-stav.vydano { color: var(--green); }
+
+    .not-found {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚽ Objednáv<span>ka</span></div>
+  <a href="stanek.html" class="nav-link">← Stánek</a>
+</header>
+
+<div class="container">
+
+  <div class="search-box">
+    <input type="number" id="cislo-input" placeholder="Číslo objednávky" min="1" max="999"
+      onkeydown="if(event.key==='Enter') hledat()" />
+    <button class="search-btn" onclick="hledat()">Hledat</button>
+  </div>
+
+  <div class="status-display" id="status-display">
+    <div class="big-order-num" id="disp-num">#—</div>
+
+    <div class="progress-wrap">
+      <div class="progress-steps">
+        <div class="step" id="step-ceka">Přijato</div>
+        <div class="step" id="step-pripravuje">Připravuje se</div>
+        <div class="step" id="step-vydano">Připraveno</div>
+      </div>
+    </div>
+
+    <div class="status-indicator" id="status-indicator">
+      <div class="status-icon" id="status-icon">⏳</div>
+      <div class="status-text" id="status-text">Čeká na přípravu</div>
+      <div class="status-sub" id="status-sub">Brzy začneme připravovat</div>
+    </div>
+
+    <div class="items-card">
+      <div class="items-header">Tvoje objednávka</div>
+      <div class="items-body" id="disp-items"></div>
+      <div class="pozn-row" id="disp-pozn" style="display:none"></div>
+    </div>
+  </div>
+
+  <div id="not-found-msg" style="display:none" class="not-found">
+    Objednávka nenalezena 🤔
+  </div>
+
+  <!-- Live board -->
+  <div class="board-section">
+    <div class="board-label">Přehled objednávek</div>
+    <div class="board-list" id="board-list">
+      <div style="text-align:center; padding: 20px; color: var(--muted);">Načítám...</div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import firebaseConfig from "./firebase-config.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let allOrders = {};
+  let watchedCislo = null;
+  let watchInterval = null;
+
+  onValue(ref(db, 'objednavky'), (snap) => {
+    allOrders = snap.exists() ? snap.val() : {};
+    renderBoard();
+    if (watchedCislo !== null) showStatus(watchedCislo);
+  });
+
+  window.hledat = function() {
+    const val = parseInt(document.getElementById('cislo-input').value);
+    if (!val) return;
+    watchedCislo = val;
+    showStatus(val);
+    if (watchInterval) clearInterval(watchInterval);
+  };
+
+  function showStatus(cislo) {
+    const entry = Object.values(allOrders).find(o => o.cislo === cislo);
+    document.getElementById('not-found-msg').style.display = 'none';
+
+    if (!entry) {
+      document.getElementById('status-display').classList.remove('show');
+      document.getElementById('not-found-msg').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('status-display').classList.add('show');
+    document.getElementById('disp-num').textContent = '#' + cislo;
+    document.getElementById('disp-items').innerHTML = (entry.items || []).join('<br>');
+
+    const poznEl = document.getElementById('disp-pozn');
+    if (entry.poznamka) {
+      poznEl.style.display = 'block';
+      poznEl.textContent = '📝 ' + entry.poznamka;
+    } else {
+      poznEl.style.display = 'none';
+    }
+
+    const stav = entry.stav || 'ceka';
+    const indicator = document.getElementById('status-indicator');
+    indicator.className = 'status-indicator ' + stav;
+
+    const icons = { ceka: '⏳', pripravuje: '🔥', vydano: '✅' };
+    const texts = { ceka: 'Čeká na přípravu', pripravuje: 'Připravuje se', vydano: 'Připraveno k vyzvednutí!' };
+    const subs  = { ceka: 'Brzy začneme připravovat', pripravuje: 'Tvoje jídlo je na grilu!', vydano: 'Přijď si pro objednávku 🎉' };
+
+    document.getElementById('status-icon').textContent = icons[stav];
+    document.getElementById('status-text').textContent = texts[stav];
+    document.getElementById('status-sub').textContent = subs[stav];
+
+    // Progress steps
+    document.getElementById('step-ceka').className = 'step done';
+    document.getElementById('step-pripravuje').className = 'step' + (stav === 'ceka' ? '' : stav === 'pripravuje' ? ' active-step' : ' done');
+    document.getElementById('step-vydano').className = 'step' + (stav === 'vydano' ? ' done' : '');
+  }
+
+  function renderBoard() {
+    const list = document.getElementById('board-list');
+    const entries = Object.values(allOrders)
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+      .slice(0, 20);
+
+    if (entries.length === 0) {
+      list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted);">Žádné objednávky</div>';
+      return;
+    }
+
+    const stavLabel = { ceka: '⏳ Čeká', pripravuje: '🔥 Připravuje se', vydano: '✅ Vydáno' };
+
+    list.innerHTML = entries.map(o => `
+      <div class="board-item" onclick="document.getElementById('cislo-input').value=${o.cislo}; window.hledat();" style="cursor:pointer;">
+        <div class="board-num">#${o.cislo}</div>
+        <div class="board-stav ${o.stav}">${stavLabel[o.stav] || o.stav}</div>
+        <div style="font-size:13px; color:var(--muted);">${o.cas || ''}</div>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>
